@@ -396,7 +396,7 @@ export default {
             return getResBaseURL() + this.monitor.screenshot + "?time=" + this.cacheTime;
         },
         isAWSInstance() {
-            return this.monitor.tags.find(tag => tag.name === "Instance _ID" && tag.value !== "");
+            return this.monitor.tags.find(tag => tag.name === "Instance_ID" && tag.value !== "");
         }
     },
 
@@ -469,11 +469,15 @@ export default {
          * @returns {void}
          */
         restartInstance() {
-            const instanceID = this.monitor.tags.find(tag => tag.name === "Instance _ID" && tag.value !== "")?.value;
-            if (!instanceID) {
+            const instanceID = this.monitor.tags.find(tag => tag.name === "Instance_ID" && tag.value !== "")?.value;
+            const environment = this.monitor.tags.find(tag => tag.name === "Environment" && tag.value !== "")?.value;
+            if (!instanceID || !environment) {
                 return;
             }
-            this.$root.getSocket().emit("restartInstance", instanceID, (res) => {
+            this.$root.getSocket().emit("restartInstance", {
+                instanceID: instanceID,
+                environment: environment
+            }, (res) => {
                 this.$root.toastRes(res);
             });
         },
