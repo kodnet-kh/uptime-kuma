@@ -22,6 +22,7 @@ const Gamedig = require("gamedig");
 const jsonata = require("jsonata");
 const jwt = require("jsonwebtoken");
 const { UptimeCalculator } = require("../uptime-calculator");
+const { restartInstance } = require('../util-aws'); 
 
 /**
  * status:
@@ -312,6 +313,10 @@ class Monitor extends BeanModel {
         const beat = async () => {
 
             let beatInterval = this.interval;
+            let allTags = await this.getTags();
+            const instanceID = allTags.find(tag => tag.name === "Instance_ID" && tag.value !== "")?.value;
+            const environment = allTags.find(tag => tag.name === "Environment" && tag.value !== "")?.value;
+            const hasAutoRestart = allTags.some(tag => tag.name === "Auto-restart");
 
             if (! beatInterval) {
                 beatInterval = 1;
@@ -925,6 +930,13 @@ class Monitor extends BeanModel {
                 log.warn("monitor", `Monitor #${this.id} '${this.name}': Under Maintenance | Type: ${this.type}`);
             } else {
                 log.warn("monitor", `Monitor #${this.id} '${this.name}': Failing: ${bean.msg} | Interval: ${beatInterval} seconds | Type: ${this.type} | Down Count: ${bean.downCount} | Resend Interval: ${this.resendInterval}`);
+                if (instanceID && environment && hasAutoRestart) {
+                    try {
+                        await restartInstance(instanceID, environment);
+                    } catch (error) {
+                        console.error('Error occurred:', error);
+                    }
+                }
             }
 
             // Calculate uptime
