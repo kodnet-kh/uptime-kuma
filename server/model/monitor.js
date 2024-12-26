@@ -902,7 +902,26 @@ class Monitor extends BeanModel {
                 apicache.clear();
 
                 UptimeKumaServer.getInstance().sendMaintenanceListByUserID(this.user_id);
-
+                if (Monitor.isImportantForNotification(isFirstBeat, previousBeat?.status, bean.status)) {
+                    if (bean.status === DOWN) {
+                        if (instanceID && environment && hasAutoRestart) {
+                            const now = new Date();
+                            const currentDay = now.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+                            const currentHour = now.getHours();
+                            const currentMinute = now.getMinutes();
+                            if (currentDay >= 1 && currentDay <= 5) {
+                                // Check if the current time is between 9:01 AM and 5:59 PM
+                                if ((currentHour > 9 || (currentHour === 9 && currentMinute >= 1)) && (currentHour < 17 || (currentHour === 17 && currentMinute <= 59))) {
+                                    try {
+                                        await restartInstance(instanceID, environment);
+                                    } catch (error) {
+                                        log.error("monitor", error);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             } else {
                 bean.important = false;
 
@@ -930,22 +949,6 @@ class Monitor extends BeanModel {
                 log.warn("monitor", `Monitor #${this.id} '${this.name}': Under Maintenance | Type: ${this.type}`);
             } else {
                 log.warn("monitor", `Monitor #${this.id} '${this.name}': Failing: ${bean.msg} | Interval: ${beatInterval} seconds | Type: ${this.type} | Down Count: ${bean.downCount} | Resend Interval: ${this.resendInterval}`);
-                if (instanceID && environment && hasAutoRestart) {
-                    const now = new Date();
-                    const currentDay = now.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
-                    const currentHour = now.getHours();
-                    const currentMinute = now.getMinutes();
-                    if (currentDay >= 1 && currentDay <= 5) {
-                        // Check if the current time is between 9:01 AM and 5:59 PM
-                        if ((currentHour > 9 || (currentHour === 9 && currentMinute >= 1)) && (currentHour < 17 || (currentHour === 17 && currentMinute <= 59))) {
-                            try {
-                                await restartInstance(instanceID, environment);
-                            } catch (error) {
-                                console.error('Error occurred:', error);
-                            }
-                        }
-                    }
-                }
             }
 
             // Calculate uptime
