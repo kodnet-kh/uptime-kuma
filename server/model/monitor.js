@@ -884,6 +884,7 @@ class Monitor extends BeanModel {
 
             // Mark as important if status changed, ignore pending pings,
             // Don't notify if disrupted changes to up
+            log.info("monitor", "Before sending notification.");
             if (isImportant) {
                 bean.important = true;
 
@@ -914,6 +915,7 @@ class Monitor extends BeanModel {
                                 if ((currentHour > 9 || (currentHour === 9 && currentMinute >= 1)) && (currentHour < 17 || (currentHour === 17 && currentMinute <= 59))) {
                                     try {
                                         await restartInstance(instanceID, environment);
+                                        log.info("monitor", "After call restart");
                                     } catch (error) {
                                         log.error("monitor", error);
                                     }
