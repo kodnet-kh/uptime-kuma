@@ -23,6 +23,7 @@ const jsonata = require("jsonata");
 const jwt = require("jsonwebtoken");
 const { UptimeCalculator } = require("../uptime-calculator");
 const { restartInstance } = require('../util-aws'); 
+const { restartAzureVm } = require('../util-azure'); 
 
 /**
  * status:
@@ -316,6 +317,9 @@ class Monitor extends BeanModel {
             let allTags = await this.getTags();
             const instanceID = allTags.find(tag => tag.name === "Instance_ID" && tag.value !== "")?.value;
             const environment = allTags.find(tag => tag.name === "Environment" && tag.value !== "")?.value;
+            const subscriptionId = allTags.find(tag => tag.name === "Subscription_ID" && tag.value !== "")?.value;
+            const resourceGroupName = allTags.find(tag => tag.name === "ResourceGroupName" && tag.value !== "")?.value;
+            const vmName = allTags.find(tag => tag.name === "VmName" && tag.value !== "")?.value;
             const hasAutoRestart = allTags.some(tag => tag.name === "Auto-restart");
 
             if (! beatInterval) {
@@ -921,6 +925,22 @@ class Monitor extends BeanModel {
                                     }
                                 }
                             }
+                        } else if ((environment == "Azure") && subscriptionId && resourceGroupName && vmName && hasAutoRestart) {
+                            const now = new Date();
+                            const currentDay = now.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+                            const currentHour = now.getHours();
+                            const currentMinute = now.getMinutes();
+                            if (currentDay >= 1 && currentDay <= 5) {
+                                // Check if the current time is between 9:01 AM and 5:59 PM
+                                if ((currentHour > 9 || (currentHour === 9 && currentMinute >= 1)) && (currentHour < 17 || (currentHour === 17 && currentMinute <= 59))) {
+                                    try {
+                                        await restartAzureVm(instanceID, environment);
+                                        log.info("monitor", "After call restart");
+                                    } catch (error) {
+                                        log.error("monitor", error);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -1275,9 +1295,9 @@ class Monitor extends BeanModel {
 
             let text;
             if (bean.status === UP) {
-                text = "âœ… Up";
+                text = "âœ? Up";
             } else {
-                text = "ðŸ”´ Down";
+                text = "?”´ Down";
             }
 
             let msg = `[${monitor.name}] [${text}] ${bean.msg}`;

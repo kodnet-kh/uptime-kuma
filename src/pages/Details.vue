@@ -471,15 +471,33 @@ export default {
         restartInstance() {
             const instanceID = this.monitor.tags.find(tag => tag.name === "Instance_ID" && tag.value !== "")?.value;
             const environment = this.monitor.tags.find(tag => tag.name === "Environment" && tag.value !== "")?.value;
-            if (!instanceID || !environment) {
+            if (!environment) {
                 return;
+            } else if (environment == "Azure") {
+                const subscriptionId = this.monitor.tags.find(tag => tag.name === "Subscription_ID" && tag.value !== "")?.value;
+                const resourceGroupName = this.monitor.tags.find(tag => tag.name === "ResourceGroupName" && tag.value !== "")?.value;
+                const vmName = this.monitor.tags.find(tag => tag.name === "VmName" && tag.value !== "")?.value;
+                if (!subscriptionId || !resourceGroupName || !vmName) {
+                    return;
+                }
+                this.$root.getSocket().emit("restartAzureInstance", {
+                    subscriptionId: subscriptionId,
+                    resourceGroupName: resourceGroupName,
+                    vmName: vmName
+                }, (res) => {
+                    this.$root.toastRes(res);
+                });
+            } else {
+                if (!instanceID || !environment) {
+                    return;
+                }
+                this.$root.getSocket().emit("restartInstance", {
+                    instanceID: instanceID,
+                    environment: environment
+                }, (res) => {
+                    this.$root.toastRes(res);
+                });
             }
-            this.$root.getSocket().emit("restartInstance", {
-                instanceID: instanceID,
-                environment: environment
-            }, (res) => {
-                this.$root.toastRes(res);
-            });
         },
 
         /**

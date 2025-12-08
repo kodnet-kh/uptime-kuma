@@ -157,6 +157,7 @@ const { resetChrome } = require("./monitor-types/real-browser-monitor-type");
 const { EmbeddedMariaDB } = require("./embedded-mariadb");
 const { SetupDatabase } = require("./setup-database");
 const { restartInstance } = require("./util-aws");
+const { restartAzureVm } = require("./util-azure");
 
 app.use(express.json());
 
@@ -974,6 +975,24 @@ let needSetup = false;
                 const { instanceID, environment } = instance;
                 await restartInstance(instanceID, environment);
                 await server.sendMonitorList(socket);
+
+                callback({
+                    ok: true,
+                    msg: "Restarted Successfully.",
+                });
+            } catch (e) {
+                callback({
+                    ok: false,
+                    msg: e.message,
+                });
+            }
+        });
+        
+        socket.on("restartAzureInstance", async (instance, callback) => {
+            try {
+                checkLogin(socket);
+                const { subscriptionId, resourceGroupName, vmName } = instance;
+                await restartAzureVm(subscriptionId, resourceGroupName, vmName)
 
                 callback({
                     ok: true,
