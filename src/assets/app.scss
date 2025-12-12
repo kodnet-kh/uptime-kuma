@@ -158,6 +158,38 @@ optgroup {
     }
 }
 
+.btn-start {
+    color: white;
+    background-color: $primary;
+    border-color: $primary;
+
+    &:hover, &:active, &:focus, &.active {
+        color: white;
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+    }
+
+    .dark & {
+        color: $dark-font-color2;
+    }
+}
+
+.btn-stop {
+    color: white;
+    background-color: $warning;
+    border-color: $warning;
+
+    &:hover, &:active, &:focus, &.active {
+        color: white;
+        background-color: $danger;
+        border-color: $danger;
+    }
+
+    .dark & {
+        color: $dark-font-color2;
+    }
+}
+
 .btn-dark {
     background-color: #161B22;
 }

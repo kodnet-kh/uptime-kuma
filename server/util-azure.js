@@ -14,6 +14,30 @@ exports.restartAzureVm = async (subscriptionId, resourceGroupName, vmName) => {
 
 };
 
+exports.startVM = async (subscriptionId, resourceGroupName, vmName) => {
+  const credential = new DefaultAzureCredential();
+  const client = new ComputeManagementClient(credential, subscriptionId);
+  try {
+    await client.virtualMachines.beginStart(resourceGroupName, vmName);
+    console.log(`VM '${vmName}' started successfully.`);
+  } catch (e) {
+    console.error(`Error starting VM: ${e.message}`);
+  }
+
+};
+
+exports.stopVM = async (subscriptionId, resourceGroupName, vmName) => {
+  const credential = new DefaultAzureCredential();
+  const client = new ComputeManagementClient(credential, subscriptionId);
+  try {
+    await client.virtualMachines.beginPowerOff(resourceGroupName, vmName);
+    console.log(`VM '${vmName}' stopped successfully.`);
+  } catch (e) {
+    console.error(`Error stopping VM: ${e.message}`);
+  }
+
+};
+
 
 
 // const { ComputeManagementClient } = require("@azure/arm-compute");

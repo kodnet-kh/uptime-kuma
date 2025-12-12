@@ -61,6 +61,12 @@
                     <button class="btn btn-warning" @click="restartInstance">
                         <font-awesome-icon icon="undo" /> {{ $t("Restart") }}
                     </button>
+                    <button class="btn btn-start" @click="startVM">
+                        <font-awesome-icon icon="play" /> {{ $t("Start") }}
+                    </button>
+                    <button class="btn btn-stop" @click="stopVM">
+                        <font-awesome-icon icon="times" /> {{ $t("Stop") }}
+                    </button>
                     <button class="btn btn-danger" @click="deleteDialog">
                         <font-awesome-icon icon="trash" /> {{ $t("Delete") }}
                     </button>
@@ -429,6 +435,8 @@ export default {
             }
             this.loadPushExample();
         }
+
+        this.hideButtons();
     },
 
     beforeUnmount() {
@@ -498,6 +506,57 @@ export default {
                     this.$root.toastRes(res);
                 });
             }
+        },
+
+        // Start and Stop Azure environment
+        startVM() {
+            const subscriptionId = this.monitor.tags.find(tag => tag.name === "Subscription_ID" && tag.value !== "")?.value;
+            const resourceGroupName = this.monitor.tags.find(tag => tag.name === "ResourceGroupName" && tag.value !== "")?.value;
+            const vmName = this.monitor.tags.find(tag => tag.name === "VmName" && tag.value !== "")?.value;
+            if (!subscriptionId || !resourceGroupName || !vmName) {
+                return;
+            }
+            this.$root.getSocket().emit("startAzureVM", {
+                subscriptionId: subscriptionId,
+                resourceGroupName: resourceGroupName,
+                vmName: vmName
+            }, (res) => {
+                this.$root.toastRes(res);
+            });
+        },
+
+        stopVM() {
+            const subscriptionId = this.monitor.tags.find(tag => tag.name === "Subscription_ID" && tag.value !== "")?.value;
+            const resourceGroupName = this.monitor.tags.find(tag => tag.name === "ResourceGroupName" && tag.value !== "")?.value;
+            const vmName = this.monitor.tags.find(tag => tag.name === "VmName" && tag.value !== "")?.value;
+            if (!subscriptionId || !resourceGroupName || !vmName) {
+                return;
+            }
+            this.$root.getSocket().emit("stopAzureVM", {
+                subscriptionId: subscriptionId,
+                resourceGroupName: resourceGroupName,
+                vmName: vmName
+            }, (res) => {
+                this.$root.toastRes(res);
+            });
+        },
+
+        // hide button start and stop if instance is not Azure
+        hideButtons() {
+            document.querySelectorAll('.col-12.col-md-7.col-xl-8.mb-3').forEach(row => {
+                const tag = row.querySelector('.tags');
+                if (!tag) return;
+                if (!tag.textContent.includes('Environment: Azure')) {
+                    const delStartBtn = row.querySelector('.btn-start');
+                    if (delStartBtn) {
+                        delStartBtn.remove();
+                    }
+                    const delStopBtn = row.querySelector('.btn-stop');
+                    if (delStopBtn) {
+                        delStopBtn.remove();
+                    }
+                }
+            })
         },
 
         /**

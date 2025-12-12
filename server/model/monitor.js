@@ -934,7 +934,7 @@ class Monitor extends BeanModel {
                                 // Check if the current time is between 9:01 AM and 5:59 PM
                                 if ((currentHour > 9 || (currentHour === 9 && currentMinute >= 1)) && (currentHour < 17 || (currentHour === 17 && currentMinute <= 59))) {
                                     try {
-                                        await restartAzureVm(instanceID, environment);
+                                        await restartAzureVm(subscriptionId, resourceGroupName, vmName);
                                         log.info("monitor", "After call restart");
                                     } catch (error) {
                                         log.error("monitor", error);

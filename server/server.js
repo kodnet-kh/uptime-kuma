@@ -157,7 +157,7 @@ const { resetChrome } = require("./monitor-types/real-browser-monitor-type");
 const { EmbeddedMariaDB } = require("./embedded-mariadb");
 const { SetupDatabase } = require("./setup-database");
 const { restartInstance } = require("./util-aws");
-const { restartAzureVm } = require("./util-azure");
+const { restartAzureVm, startVM, stopVM } = require("./util-azure");
 
 app.use(express.json());
 
@@ -997,6 +997,42 @@ let needSetup = false;
                 callback({
                     ok: true,
                     msg: "Restarted Successfully.",
+                });
+            } catch (e) {
+                callback({
+                    ok: false,
+                    msg: e.message,
+                });
+            }
+        });
+
+        socket.on("startAzureVM", async (instance, callback) => {
+            try {
+                checkLogin(socket);
+                const { subscriptionId, resourceGroupName, vmName } = instance;
+                await startVM(subscriptionId, resourceGroupName, vmName)
+
+                callback({
+                    ok: true,
+                    msg: "Started Successfully.",
+                });
+            } catch (e) {
+                callback({
+                    ok: false,
+                    msg: e.message,
+                });
+            }
+        });
+
+        socket.on("stopAzureVM", async (instance, callback) => {
+            try {
+                checkLogin(socket);
+                const { subscriptionId, resourceGroupName, vmName } = instance;
+                await stopVM(subscriptionId, resourceGroupName, vmName)
+
+                callback({
+                    ok: true,
+                    msg: "Stopped Successfully.",
                 });
             } catch (e) {
                 callback({
