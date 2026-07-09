@@ -93,19 +93,48 @@ class SMTP extends NotificationProvider {
         let transporter = nodemailer.createTransport(config);
 
         let bodyTextContent = msg;
-        if (heartbeatJSON) {
-            bodyTextContent = `${msg}\nTime (${heartbeatJSON["timezone"]}): ${heartbeatJSON["localDateTime"]}`;
-        }
 
-        // send mail with defined transport object
-        await transporter.sendMail({
-            from: notification.smtpFrom,
-            cc: notification.smtpCC,
-            bcc: notification.smtpBCC,
-            to: notification.smtpTo,
-            subject: subject,
-            text: bodyTextContent,
-        });
+        // @ChhunyAm 2026-07-06
+        // Limit to 1 notication to JIRA when server down (remove cc/bcc)
+        // Update message when server down
+
+        // if (heartbeatJSON) {
+        //     bodyTextContent = `${msg}\nTime (${heartbeatJSON["timezone"]}): ${heartbeatJSON["localDateTime"]}`;
+        // }
+        
+        if (heartbeatJSON !== null) {
+            if (heartbeatJSON["status"] === DOWN) {
+                bodyTextContent = `お客様各位\n現在、サーバーにて障害が発生しております。\n復旧対応として、約30分後にサーバーの再起動を実施予定です。\n再起動を控える必要がある場合は、お手数ですがご連絡ください。\nご不便をおかけいたしますが、何卒よろしくお願いいたします。`;
+                // send mail with defined transport object
+                await transporter.sendMail({
+                    from: notification.smtpFrom,
+                    cc: notification.smtpCC,
+                    bcc: notification.smtpBCC,
+                    to: notification.smtpTo,
+                    subject: subject,
+                    text: bodyTextContent,
+                });
+            } else {
+                bodyTextContent = `${msg}\nTime (${heartbeatJSON["timezone"]}): ${heartbeatJSON["localDateTime"]}`;
+                // send mail with defined transport object
+                await transporter.sendMail({
+                    from: notification.smtpFrom,
+                    to: notification.smtpTo,
+                    subject: subject,
+                    text: bodyTextContent,
+                });
+            }
+        } else {
+            // send mail with defined transport object
+            await transporter.sendMail({
+                from: notification.smtpFrom,
+                cc: notification.smtpCC,
+                bcc: notification.smtpBCC,
+                to: notification.smtpTo,
+                subject: subject,
+                text: bodyTextContent,
+            });
+        }
 
         return "Sent Successfully.";
     }
