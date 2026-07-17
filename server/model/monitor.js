@@ -1297,7 +1297,7 @@ class Monitor extends BeanModel {
             if (bean.status === UP) {
                 text = "✅ Up";
             } else {
-                text = "🔴 Down";
+                text = "Down";
             }
 
             let msg = `[${monitor.name}] [${text}] ${bean.msg}`;
